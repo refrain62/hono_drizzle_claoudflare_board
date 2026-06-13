@@ -3,6 +3,8 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { desc, gt } from "drizzle-orm";
 import { posts } from "./db/schema";
+import { Link, ViteClient } from "vite-ssr-components/hono";
+import { secureHeaders } from "hono/secure-headers";
 
 // 環境変数の型定義
 type Bindings = {
@@ -11,17 +13,29 @@ type Bindings = {
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-// レイアウト用コンポーネント（pico.cssを読み込み）
+// セキュアヘッダー & CSP の設定
+app.use(
+  "*",
+  secureHeaders({
+    contentSecurityPolicy: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      connectSrc: ["'self'", "ws://localhost:5173", "http://localhost:5173"],
+      upgradeInsecureRequests: [],
+    },
+  })
+);
+
+// レイアウト用コンポーネント
 const Layout = (props: { children: any }) => {
   return (
     <html lang="ja">
       <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css"
-        />
+        <ViteClient />
+        <Link rel="stylesheet" href="/src/style.css" />
         <title>ワンライナー掲示板</title>
       </head>
       <body>
